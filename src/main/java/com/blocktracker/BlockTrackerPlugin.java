@@ -33,7 +33,6 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
 
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
@@ -65,7 +64,7 @@ public class BlockTrackerPlugin extends Plugin
 	Map<WorldPoint, EntityState> tileMapping;
 
 	@Getter(AccessLevel.PACKAGE)
-	private List<String> trackableNpcs = new ArrayList<>();
+	private List<String> trackableNpcs;
 
 	@Getter(AccessLevel.PACKAGE)
 	private Actor localPlayer;
@@ -85,7 +84,7 @@ public class BlockTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		generateInitialBlocking();
+		initializeMappings();
 		overlayManager.add(overlay);
 	}
 
@@ -93,25 +92,42 @@ public class BlockTrackerPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		overlayManager.remove(overlay);
+		trackedNpcMapping = null;
+		trackedPlayerMapping = null;
+		tileMapping = null;
+		trackableNpcs = null;
 	}
 
 	/**
-	 * Initial Generation of blocking based on present NPCS and players
-	 * Initial blocking is not perfect as prior tracking is required to determine tile status.
-	 * Also set on "Tracked Npcs" config change, as for processing reasons npcs are not needlessly tracked unless desired.
+	 * Set default values of mapping variables
 	 */
-	public void generateInitialBlocking()
+	public void initializeMappings()
 	{
 		CacheConfigs();
 		trackableNpcs = parseTrackableNpcNames();
 
 		tileMapping = new HashMap<>();
 		trackedNpcMapping = new TreeMap<>();
+		trackedPlayerMapping = new TreeMap<>();
+	}
+
+	/**
+	 * Initial Generation of blocking based on present NPCS and players
+	 * Initial blocking is not perfect as prior tracking is required to determine tile status.
+	 * Set on "Tracked Npcs" config change, as for processing reasons npcs are not needlessly tracked unless desired.
+	 */
+	public void generateInitialBlocking()
+	{
+		initializeMappings();
+
+		if(client.getTopLevelWorldView() == null)
+			return;
+
 		for (NPC npc : client.getTopLevelWorldView().npcs())
 		{
 			TrackNpc(npc);
 		}
-		trackedPlayerMapping = new TreeMap<>();
+
 		for (Player player : client.getTopLevelWorldView().players())
 		{
 			TrackPlayer(player);

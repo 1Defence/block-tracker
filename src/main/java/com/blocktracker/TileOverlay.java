@@ -39,6 +39,9 @@ public class TileOverlay extends Overlay
     public Dimension render(Graphics2D graphics)
     {
 
+        if(plugin.tileMapping == null)
+            return null;
+
         for (Map.Entry<WorldPoint, EntityState> entry : plugin.tileMapping.entrySet())
         {
 
